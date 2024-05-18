@@ -1,9 +1,9 @@
 class tensor:
-    def __init__(self, value, parents=None, grad=None):
+    def __init__(self, value, parents=set(), grad=None):
         self.value = value
         self.parents = parents
         self._backward = lambda: None
-        self.grad = 1
+        self.grad = 0
 
     def __repr__(self):
         return f"Tensor <{self.value}>"
@@ -44,9 +44,28 @@ class tensor:
     def backward(self):
         # NOTE: Sorting topologically is necessary so that we can call the backwards pass in order. If we do it out of order we would be
         # mulyiplying the wrong things for the chain rule
-        pass
+        topo = []
+        visited = set()
+
+        def build_topo(v):
+            if v not in visited:
+                visited.add(v)
+                for child in v.parents:
+                    build_topo(child)
+                topo.append(v)
+
+        build_topo(self)
+
+        # go one variable at a time and apply the chain rule to get its gradient
+        self.grad = 1
+        for v in reversed(topo):
+            v._backward()
 
 
 if __name__ == "__main__":
     a = tensor(7)
     b = tensor(8)
+    y = a * b
+    print(y)
+    y.backward()
+    print(y.grad, a.grad, b.grad)
