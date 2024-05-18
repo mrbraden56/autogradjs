@@ -1,4 +1,7 @@
-class tensor:
+import random
+
+
+class Tensor:
     def __init__(self, value, parents=set(), grad=None):
         self.value = value
         self.parents = parents
@@ -9,11 +12,11 @@ class tensor:
         return f"Tensor <{self.value}>"
 
     def __add__(self, x2):
-        if isinstance(x2, tensor):
-            y = tensor(self.value + x2.value, (self, x2))
+        if isinstance(x2, Tensor):
+            y = Tensor(self.value + x2.value, (self, x2))
         else:
-            x2 = tensor(x2)
-            y = tensor(self.value + x2.value, (self, x2))
+            x2 = Tensor(x2)
+            y = Tensor(self.value + x2.value, (self, x2))
 
         def backward():
             # NOTE:
@@ -28,11 +31,11 @@ class tensor:
 
     def __mul__(self, x2):
         # NOTE: Gradient = x2
-        if isinstance(x2, tensor):
-            y = tensor(self.value * x2.value, (self, x2))
+        if isinstance(x2, Tensor):
+            y = Tensor(self.value * x2.value, (self, x2))
         else:
-            x2 = tensor(x2)
-            y = tensor(self.value * x2.value, (self, x2))
+            x2 = Tensor(x2)
+            y = Tensor(self.value * x2.value, (self, x2))
 
         def backward():
             self.grad += x2.value * y.grad
@@ -62,10 +65,37 @@ class tensor:
             v._backward()
 
 
+class Linear:
+    def __init__(self, nin, nout):
+        w = [Tensor(random.uniform(-1, 1)) for _ in range(nin)]
+        b = Tensor(0)
+
+
+class FFN:
+    def __init__(self):
+        nin = 32
+        nout = 256
+        self.l1 = Linear(nin, nout)
+        self.l2 = Linear(256, 32)
+        self.l3 = Linear(32, 1)
+
+    def forward(self, x):
+        f1 = self.l1(x)
+        f2 = self.l2(f1)
+        f3 = self.l3(f2)
+        return f3
+
+
 if __name__ == "__main__":
-    a = tensor(7)
-    b = tensor(8)
-    y = a * b
-    print(y)
-    y.backward()
-    print(y.grad, a.grad, b.grad)
+    x = [[Tensor(random.uniform(-1, 1)) for _ in range(32)] for _ in range(32)]
+    print(f"Shape of input is ({len(x)}, {len(x[0])})")
+
+    epochs = 100
+    for epoch in range(epochs):
+        pass
+
+        # zero the gradients
+        # forward pass
+        # calculate loss(mse)
+        # backprop
+        # step of .01
