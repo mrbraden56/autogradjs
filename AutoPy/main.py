@@ -19,10 +19,20 @@ class Tensor:
             y = Tensor(self.value + x2.value, (self, x2))
 
         def backward():
-            # NOTE:
-            # y = a + b
-            # dy / da = 1 * (previous chained method)
-            # dy / db = 1 * (previous chained method)
+            self.grad += 1.0 * (y.grad)
+            x2.grad += 1.0 * (y.grad)
+
+        y._backward = backward
+        return y
+
+    def __sub__(self, x2):
+        if isinstance(x2, Tensor):
+            y = Tensor(self.value - x2.value, (self, x2))
+        else:
+            x2 = Tensor(x2)
+            y = Tensor(self.value - x2.value, (self, x2))
+
+        def backward():
             self.grad += 1.0 * (y.grad)
             x2.grad += 1.0 * (y.grad)
 
@@ -30,7 +40,6 @@ class Tensor:
         return y
 
     def __mul__(self, x2):
-        # NOTE: Gradient = x2
         if isinstance(x2, Tensor):
             y = Tensor(self.value * x2.value, (self, x2))
         else:
@@ -42,6 +51,29 @@ class Tensor:
             x2.grad += self.value * y.grad
 
         y._backward = backward
+        return y
+
+    def __pow__(self, power):
+        y = Tensor(self.value**power, (self,))
+
+        def backward():
+            self.grad += (power * self.value ** (power - 1)) * y.grad
+
+        y._backward = backward
+        return y
+
+    def leaky_relu(self):
+        if self.value > 0:
+            y = Tensor(self.value, (self,))
+        else:
+            y = Tensor(self.value * 0.01, (self,))
+
+        def backward():
+            # NOTE: 1 if x>=0 else 0.01
+            self.grad += 1 if self.value >= 0 else 0.01 * y.grad
+
+        y._backward = backward
+
         return y
 
     def backward(self):
@@ -65,37 +97,47 @@ class Tensor:
             v._backward()
 
 
-class Linear:
+class Layer:
     def __init__(self, nin, nout):
-        w = [Tensor(random.uniform(-1, 1)) for _ in range(nin)]
-        b = Tensor(0)
+        self.neurons = [
+            [Tensor(random.uniform(-1, 1)) for _ in range(nin)] for _ in range(nout)
+        ]
+        self.bias = [Tensor(0) for _ in range(nout)]
+
+    def __call__(self, inputs):
+        out = []
+        for neuron, b in zip(self.neurons, self.bias):
+            y = sum(((wi * xi).leaky_relu() for wi, xi in zip(neuron, inputs)), b)
+            out.append(y)
+        return out
 
 
 class FFN:
     def __init__(self):
-        nin = 32
-        nout = 256
-        self.l1 = Linear(nin, nout)
-        self.l2 = Linear(256, 32)
-        self.l3 = Linear(32, 1)
+        self.layers = [Layer(3, 16), Layer(16, 8), Layer(8, 1)]
 
-    def forward(self, x):
-        f1 = self.l1(x)
-        f2 = self.l2(f1)
-        f3 = self.l3(f2)
-        return f3
+    def __call__(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x[0]
 
 
 if __name__ == "__main__":
-    x = [[Tensor(random.uniform(-1, 1)) for _ in range(32)] for _ in range(32)]
-    print(f"Shape of input is ({len(x)}, {len(x[0])})")
+    inputs = [[0.5, 1, 0.2], [0.2, 0.3, 0.4], [1, 0.8, 0.9]]
+    ys = [1.0, 1.0, -1.0]
+    n = FFN()
+    pred = [n(x) for x in inputs]
+    print(pred)
 
-    epochs = 100
-    for epoch in range(epochs):
-        pass
+    # epochs = 100
+    # for epoch in range(epochs):
+    # n.zero_grad()
+    preds = [n(x) for x in inputs]
+    loss = sum((ypred - yout) ** 2 for ypred, yout in zip(preds, ys))
+    print(preds)
 
-        # zero the gradients
-        # forward pass
-        # calculate loss(mse)
-        # backprop
-        # step of .01
+    # zero the gradients
+    # forward pass
+    # calculate loss(mse)
+    # backprop
+    # step of .01
