@@ -69,7 +69,6 @@ class Tensor:
             y = Tensor(self.value * 0.01, (self,))
 
         def backward():
-            # NOTE: 1 if x>=0 else 0.01
             self.grad += 1 if self.value >= 0 else 0.01 * y.grad
 
         y._backward = backward
