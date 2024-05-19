@@ -130,12 +130,26 @@ class FFN:
 
 
 if __name__ == "__main__":
-    inputs = [[2, 3, -1], [3, -1, 0.5], [1, 1, -1]]
-    ys = [1.0, 1.0, -1.0]
+    inputs = [
+        [random.uniform(-1, 1) for _ in range(10)],
+        [random.uniform(-1, 1) for _ in range(10)],
+        [random.uniform(-1, 1) for _ in range(10)],
+        [random.uniform(-1, 1) for _ in range(10)],
+        [random.uniform(-1, 1) for _ in range(10)],
+        [random.uniform(-1, 1) for _ in range(10)],
+    ]
+    ys = [
+        random.uniform(-1, 1),
+        random.uniform(-1, 1),
+        random.uniform(-1, 1),
+        random.uniform(-1, 1),
+        random.uniform(-1, 1),
+        random.uniform(-1, 1),
+    ]
     n = FFN()
     pred = [n(x) for x in inputs]
 
-    epochs = 2000
+    epochs = 500
     for epoch in range(epochs):
         n.zero_grad()
         preds = [n(x) for x in inputs]
