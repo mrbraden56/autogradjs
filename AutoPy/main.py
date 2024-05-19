@@ -25,19 +25,14 @@ class Tensor:
         y._backward = backward
         return y
 
-    def __sub__(self, x2):
-        if isinstance(x2, Tensor):
-            y = Tensor(self.value - x2.value, (self, x2))
-        else:
-            x2 = Tensor(x2)
-            y = Tensor(self.value - x2.value, (self, x2))
+    def __sub__(self, other):
+        return self + (-other)
 
-        def backward():
-            self.grad += 1.0 * (y.grad)
-            x2.grad += 1.0 * (y.grad)
+    def __neg__(self):  # -self
+        return self * -1
 
-        y._backward = backward
-        return y
+    def __rsub__(self, other):  # other - self
+        return other + (-self)
 
     def __mul__(self, x2):
         if isinstance(x2, Tensor):
@@ -62,16 +57,13 @@ class Tensor:
         y._backward = backward
         return y
 
-    def leaky_relu(self):
-        if self.value > 0:
-            y = Tensor(self.value, (self,))
-        else:
-            y = Tensor(self.value * 0.01, (self,))
+    def relu(self):
+        y = Tensor(0 if self.value < 0 else self.value, (self,))
 
-        def backward():
-            self.grad += 1 if self.value >= 0 else 0.01 * y.grad
+        def _backward():
+            self.grad += (y.value > 0) * y.grad
 
-        y._backward = backward
+        y._backward = _backward
 
         return y
 
@@ -106,7 +98,7 @@ class Layer:
     def __call__(self, inputs):
         out = []
         for neuron, b in zip(self.neurons, self.bias):
-            y = sum(((wi * xi).leaky_relu() for wi, xi in zip(neuron, inputs)), b)
+            y = sum(((wi * xi).relu() for wi, xi in zip(neuron, inputs)), b)
             out.append(y)
         return out
 
@@ -120,23 +112,36 @@ class FFN:
             x = layer(x)
         return x[0]
 
+    def zero_grad(self):
+        for layer in self.layers:
+            for i in range(len(layer.neurons)):
+                for j in range(len(layer.neurons[i])):
+                    layer.neurons[i][j].grad = 0
+            for i in range(len(layer.bias)):
+                layer.bias[i].grad = 0
+
+    def sgd(self, step):
+        for layer in self.layers:
+            for i in range(len(layer.neurons)):
+                for j in range(len(layer.neurons[i])):
+                    layer.neurons[i][j].value += -layer.neurons[i][j].grad * step
+            for i in range(len(layer.bias)):
+                layer.bias[i].value += -layer.bias[i].grad * step
+
 
 if __name__ == "__main__":
-    inputs = [[0.5, 1, 0.2], [0.2, 0.3, 0.4], [1, 0.8, 0.9]]
+    inputs = [[2, 3, -1], [3, -1, 0.5], [1, 1, -1]]
     ys = [1.0, 1.0, -1.0]
     n = FFN()
     pred = [n(x) for x in inputs]
-    print(pred)
 
-    # epochs = 100
-    # for epoch in range(epochs):
-    # n.zero_grad()
-    preds = [n(x) for x in inputs]
-    loss = sum((ypred - yout) ** 2 for ypred, yout in zip(preds, ys))
+    epochs = 2000
+    for epoch in range(epochs):
+        n.zero_grad()
+        preds = [n(x) for x in inputs]
+        loss = sum(((ypred - yout) ** 2 for ypred, yout in zip(preds, ys)), Tensor(0))
+        loss.backward()
+        n.sgd(0.001)
+        print(f"Epoch: {epoch}, Loss: {loss.value}")
+
     print(preds)
-
-    # zero the gradients
-    # forward pass
-    # calculate loss(mse)
-    # backprop
-    # step of .01
