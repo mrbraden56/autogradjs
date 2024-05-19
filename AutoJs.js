@@ -140,6 +140,19 @@ if (require.main === module) {
 
   var x = Tensor.array(x);
   nn = new FFN();
-  out = nn.forward(x);
-  console.log(out);
+
+  var epochs = 100;
+  for (var i = 0; i < epochs; i++) {
+    //nn.zero_grad();
+    out = nn.forward(x);
+    //loss
+    //loss.backward()
+    //sgd 0.01
+    if (i % 10 === 0) {
+      console.log(`Epoch: ${i}`);
+    }
+  }
+  if (i % 10 === 0) {
+    console.log(`Epoch: ${i}`);
+  }
 }
