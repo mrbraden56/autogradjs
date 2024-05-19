@@ -21,20 +21,22 @@ class Tensor:
             y = Tensor(self.value + x2.value, (self, x2))
 
         def backward():
-            self.grad += 1.0 * (y.grad)
-            x2.grad += 1.0 * (y.grad)
+            op_grad = 1.0
+            chain_rule = y.grad
+            self.grad += op_grad * (chain_rule)
+            x2.grad += op_grad * (chain_rule)
 
         y._backward = backward
         return y
 
-    def __sub__(self, other):
-        return self + (-other)
+    def __sub__(self, x2):
+        return self + (-x2)
 
     def __neg__(self):  # -self
         return self * -1
 
-    def __rsub__(self, other):  # other - self
-        return other + (-self)
+    def __rsub__(self, x2):
+        return x2 + (-self)
 
     def __mul__(self, x2):
         if isinstance(x2, Tensor):
