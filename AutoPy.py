@@ -121,7 +121,13 @@ class Layer:
 
 class FFN:
     def __init__(self):
-        self.layers = [Layer(3, 32), Layer(32, 64), Layer(64, 32), Layer(32, 1)]
+        self.layers = [
+            Layer(3, 32),
+            Layer(32, 64),
+            Layer(64, 256),
+            Layer(256, 64),
+            Layer(64, 1),
+        ]
 
     def __call__(self, x):
         for layer in self.layers:
@@ -148,21 +154,15 @@ class FFN:
 if __name__ == "__main__":
     start_time = time.time()  # Start timing
     inputs = [
-        [-2, 1, 0, -1, 2, 1, -1, 2, -2, 1],
-        [1, -1, 2, -2, 1, 0, 2, -1, 0, -3],
-        [0, -2, 1, -1, 2, -1, 0, -1, 1, -3],
-        [-1, 2, -1, 1, -2, 0, -1, 2, 0, 1],
-        [2, -1, 1, -2, 1, 2, -1, 0, 1, -1],
-        [0, 1, -2, 2, -1, 1, -1, 0, 2, -1],
+        [2, 3, -1],
+        [-1, 0, -2],
+        [3, 2, 3],
     ]
 
     ys = [
-        1,
-        -2,
-        2,
+        0,
         -1,
         1,
-        -2,
     ]
     n = FFN()
 
@@ -179,3 +179,4 @@ if __name__ == "__main__":
     print(f"Epoch: {epoch}, Loss: {loss.value}")
     end_time = time.time()  # End timing
     print(f"Total training time: {end_time - start_time:.2f} seconds")
+    print(preds)

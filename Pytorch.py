@@ -11,14 +11,21 @@ class FFN(nn.Module):
         super().__init__()
         torch.manual_seed(0)
         self.net = nn.Sequential(
-            nn.Linear(10, 32),
-            nn.ReLU(),
+            nn.Linear(3, 32),
+            nn.Tanh(),
             nn.Linear(32, 64),
-            nn.ReLU(),
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Linear(32, 1),
+            nn.Tanh(),
+            nn.Linear(64, 256),
+            nn.Tanh(),
+            nn.Linear(256, 64),
+            nn.Tanh(),
+            nn.Linear(64, 1),
         )
+        # Layer(3, 32),
+        # Layer(32, 64),
+        # Layer(64, 256),
+        # Layer(256, 64),
+        # Layer(64, 1),
 
     def forward(self, X):
         return self.net(X)
@@ -32,18 +39,13 @@ if __name__ == "__main__":
     start_time = time.time()  # Start timing
     inputs = np.array(
         [
-            [-2, 1, 0, -1, 2, 1, -1, 2, -2, 1],
-            [1, -1, 2, -2, 1, 0, 2, -1, 0, -3],
-            [0, -2, 1, -1, 2, -1, 0, -1, 1, -3],
-            [-1, 2, -1, 1, -2, 0, -1, 2, 0, 1],
-            [2, -1, 1, -2, 1, 2, -1, 0, 1, -1],
-            [0, 1, -2, 2, -1, 1, -1, 0, 2, -1],
+            [2, 3, -1],
+            [-1, 0, -2],
+            [3, 2, 3],
         ]
     )
 
-    ys = np.array([1, -2, 2, -1, 1, -2]).reshape(
-        -1, 1
-    )  # Reshape ys to be a column vector
+    ys = np.array([0, -1, 1]).reshape(-1, 1)  # Reshape ys to be a column vector
 
     # Convert inputs and ys to PyTorch tensors
     inputs = torch.tensor(inputs, dtype=torch.float32)
@@ -65,3 +67,4 @@ if __name__ == "__main__":
     print(f"Epoch: {epoch}, Loss: {loss.item()}")
     end_time = time.time()  # End timing
     print(f"Total training time: {end_time - start_time:.2f} seconds")
+    print(out)
