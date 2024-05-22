@@ -21,11 +21,6 @@ class FFN(nn.Module):
             nn.Tanh(),
             nn.Linear(64, 1),
         )
-        # Layer(3, 32),
-        # Layer(32, 64),
-        # Layer(64, 256),
-        # Layer(256, 64),
-        # Layer(64, 1),
 
     def forward(self, X):
         return self.net(X)
