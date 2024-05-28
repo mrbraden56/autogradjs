@@ -178,5 +178,5 @@ if __name__ == "__main__":
 
     print(f"Epoch: {epoch}, Loss: {loss.value}")
     end_time = time.time()  # End timing
-    print(f"Total training time: {end_time - start_time:.2f} seconds")
     print(preds)
+    print(f"Execution time: {end_time - start_time:.2f} seconds")

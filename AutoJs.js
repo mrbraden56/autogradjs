@@ -196,7 +196,7 @@ class Layer {
 
 class FFN {
   constructor() {
-    this.layers = [
+    this.layers_1 = [
       //2x3
       new Layer(3, 32),
       new Layer(32, 64),
@@ -204,6 +204,8 @@ class FFN {
       new Layer(256, 64),
       new Layer(64, 1),
     ];
+
+    this.layers = this.layers_1;
   }
 
   forward(x) {
@@ -250,6 +252,8 @@ class FFN {
 if (require.main === module) {
   runTests();
 
+  let startTime = performance.now();
+
   var x = [
     [2, 3, -1],
     [-1, 0, -2],
@@ -288,6 +292,9 @@ if (require.main === module) {
   console.log(
     `Pred Values" ${out[0][0].value}, ${out[1][0].value}, ${out[2][0].value}`,
   );
+  let endTime = performance.now();
+  let executionTime = (endTime - startTime) / 1000;
+  console.log(`Execution time: ${executionTime} seconds`);
 }
 
 function assertEqual(actual, expected, message) {

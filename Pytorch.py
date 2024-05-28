@@ -4,6 +4,23 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import time
+from torch.profiler import profile, record_function, ProfilerActivity
+
+
+def total_flops(input_size, layers):
+    def flops(m, n, p):
+        matmul = (2 * n - 1) * m * p
+        bias = m * p
+        return matmul + bias
+
+    batch_size = len(input_size)
+    total_flops = 0
+
+    for layer in layers:
+        in_features, out_features = layer
+        total_flops += flops(in_features, batch_size, out_features)
+
+    return total_flops
 
 
 class FFN(nn.Module):
@@ -31,7 +48,6 @@ class FFN(nn.Module):
 
 
 if __name__ == "__main__":
-    start_time = time.time()  # Start timing
     inputs = np.array(
         [
             [2, 3, -1],
@@ -60,6 +76,19 @@ if __name__ == "__main__":
             print(f"Epoch: {epoch}, Loss: {loss.item()}")
 
     print(f"Epoch: {epoch}, Loss: {loss.item()}")
-    end_time = time.time()  # End timing
-    print(f"Total training time: {end_time - start_time:.2f} seconds")
     print(out)
+
+    model_layers = [
+        [3, 32],
+        [32, 64],
+        [64, 256],
+        [256, 64],
+        [64, 1],
+    ]
+
+    # Input size (list of lists)
+    input_size = [[2, 3, -1], [-1, 0, -2], [3, 2, 3]]
+
+    # Calculate total FLOPS
+    total_flops = total_flops(input_size, model_layers)
+    print(f"Total FLOPS: {total_flops}")
