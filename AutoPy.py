@@ -1,4 +1,5 @@
 import random
+import gc
 import math
 import time
 
@@ -84,8 +85,6 @@ class Tensor:
         return y
 
     def backward(self):
-        # NOTE: Sorting topologically is necessary so that we can call the backwards pass in order. If we do it out of order we would be
-        # mulyiplying the wrong things for the chain rule
         topo = []
         visited = set()
 
@@ -98,13 +97,13 @@ class Tensor:
 
         build_topo(self)
 
-        # go one variable at a time and apply the chain rule to get its gradient
         self.grad = 1
         for v in reversed(topo):
             v._backward()
 
 
 class Layer:
+
     def __init__(self, nin, nout):
         self.neurons = [
             [Tensor(random.uniform(-1, 1)) for _ in range(nin)] for _ in range(nout)
@@ -122,11 +121,8 @@ class Layer:
 class FFN:
     def __init__(self):
         self.layers = [
-            Layer(3, 32),
-            Layer(32, 64),
-            Layer(64, 256),
-            Layer(256, 64),
-            Layer(64, 1),
+            Layer(3, 30),
+            Layer(30, 1),
         ]
 
     def __call__(self, x):
@@ -151,7 +147,33 @@ class FFN:
                 layer.bias[i].value += -layer.bias[i].grad * step
 
 
+import gc
+import sys
+import time
+import io
+
+
+def capture_gc_time():
+    old_stderr = sys.stderr
+    sys.stderr = io.StringIO()
+    gc.collect()
+    debug_output = sys.stderr.getvalue()
+    sys.stderr = old_stderr
+
+    total_gc_time = 0.0
+    for line in debug_output.splitlines():
+        if "elapsed" in line:
+            parts = line.split(",")
+            for part in parts:
+                if "elapsed" in part:
+                    time_str = part.split()[0]
+                    total_gc_time += float(time_str[:-1])
+    return total_gc_time
+
+
 if __name__ == "__main__":
+    initial_gc_time = capture_gc_time()
+
     start_time = time.time()  # Start timing
     inputs = [
         [2, 3, -1],
@@ -180,3 +202,10 @@ if __name__ == "__main__":
     end_time = time.time()  # End timing
     print(preds)
     print(f"Execution time: {end_time - start_time:.2f} seconds")
+    # Get final GC stats
+    final_gc_time = capture_gc_time()
+
+    # Calculate total GC time elapsed
+    gc_time_elapsed = final_gc_time - initial_gc_time
+
+    print(f"Total time elapsed by garbage collector: {gc_time_elapsed} seconds")

@@ -198,11 +198,9 @@ class FFN {
   constructor() {
     this.layers_1 = [
       //2x3
-      new Layer(3, 32),
-      new Layer(32, 64),
-      new Layer(64, 256),
-      new Layer(256, 64),
-      new Layer(64, 1),
+      new Layer(3, 30),
+      new Layer(30, 30),
+      new Layer(30, 1),
     ];
 
     this.layers = this.layers_1;
@@ -249,54 +247,7 @@ class FFN {
   }
 }
 
-if (require.main === module) {
-  runTests();
-
-  let startTime = performance.now();
-
-  var x = [
-    [2, 3, -1],
-    [-1, 0, -2],
-    [3, 2, 3],
-  ]; //3x3
-  x = Tensor.array(x);
-
-  var ys = [[0], [-1], [1]];
-  ys = Tensor.array(ys);
-  var nn = new FFN();
-
-  var epochs = 100;
-  for (var epoch = 0; epoch < epochs; epoch++) {
-    nn.zero_grad();
-    var out = nn.forward(x);
-
-    var loss = new Tensor(0);
-
-    for (var i = 0; i < out.length; i++) {
-      for (var j = 0; j < out[0].length; j++) {
-        var difference = Tensor.sub(out[i][j], ys[i][j]);
-        var mse = Tensor.pow(difference, 2);
-        loss = Tensor.add(loss, mse);
-      }
-    }
-    loss.backward();
-    nn.sgd(0.01);
-    if (epoch % 10 === 0) {
-      console.log(`Epoch: ${epoch}, Loss: ${loss.value}`);
-    }
-  }
-  console.log(`Epoch: ${epochs}, Loss: ${loss.value}`);
-  console.log(
-    `Actual Values" ${ys[0][0].value}, ${ys[1][0].value}, ${ys[2][0].value}`,
-  );
-  console.log(
-    `Pred Values" ${out[0][0].value}, ${out[1][0].value}, ${out[2][0].value}`,
-  );
-  let endTime = performance.now();
-  let executionTime = (endTime - startTime) / 1000;
-  console.log(`Execution time: ${executionTime} seconds`);
-}
-
+//NOTE: Tests
 function assertEqual(actual, expected, message) {
   if (actual !== expected) {
     throw new Error(message || `Expected ${actual} to equal ${expected}`);
@@ -426,4 +377,48 @@ function runTests() {
   } catch (error) {
     console.error("Test failed:", error.message);
   }
+}
+
+if (require.main === module) {
+  runTests();
+
+  let startTime = performance.now();
+
+  var x = [
+    [2, 3, -1],
+    [-1, 0, -2],
+    [3, 2, 3],
+  ]; //3x3
+  x = Tensor.array(x);
+  var ys = [[0], [-1], [1]];
+  ys = Tensor.array(ys);
+  var nn = new FFN();
+  var epochs = 100;
+  for (var epoch = 0; epoch < epochs; epoch++) {
+    nn.zero_grad();
+    var out = nn.forward(x);
+    var loss = new Tensor(0);
+    for (var i = 0; i < out.length; i++) {
+      for (var j = 0; j < out[0].length; j++) {
+        var difference = Tensor.sub(out[i][j], ys[i][j]);
+        var mse = Tensor.pow(difference, 2);
+        loss = Tensor.add(loss, mse);
+      }
+    }
+    loss.backward();
+    nn.sgd(0.01);
+    if (epoch % 10 === 0) {
+      console.log(`Epoch: ${epoch}, Loss: ${loss.value}`);
+    }
+  }
+  console.log(`Epoch: ${epochs}, Loss: ${loss.value}`);
+  console.log(
+    `Actual Values" ${ys[0][0].value}, ${ys[1][0].value}, ${ys[2][0].value}`,
+  );
+  console.log(
+    `Pred Values" ${out[0][0].value}, ${out[1][0].value}, ${out[2][0].value}`,
+  );
+  let endTime = performance.now();
+  let executionTime = (endTime - startTime) / 1000;
+  console.log(`Execution time: ${executionTime} seconds`);
 }

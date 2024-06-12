@@ -8,17 +8,21 @@ from torch.profiler import profile, record_function, ProfilerActivity
 
 
 def total_flops(input_size, layers):
-    def flops(m, n, p):
-        matmul = (2 * n - 1) * m * p
+    def flops(n, m, p):
+        # np(2n-1)
+        # nXm
+        # mXp
+        matmul = (m * p) * ((2 * n) - 1)
         bias = m * p
-        return matmul + bias
+        return matmul  # + bias
 
-    batch_size = len(input_size)
+    n = len(input_size[0])
     total_flops = 0
 
     for layer in layers:
-        in_features, out_features = layer
-        total_flops += flops(in_features, batch_size, out_features)
+        m, p = layer
+        total_flops += flops(n, m, p)
+        # TODO Do I need to update anything right here?
 
     return total_flops
 
@@ -28,15 +32,15 @@ class FFN(nn.Module):
         super().__init__()
         torch.manual_seed(0)
         self.net = nn.Sequential(
-            nn.Linear(3, 32),
+            nn.Linear(3, 100),
             nn.Tanh(),
-            nn.Linear(32, 64),
+            nn.Linear(100, 100),
             nn.Tanh(),
-            nn.Linear(64, 256),
+            nn.Linear(100, 100),
             nn.Tanh(),
-            nn.Linear(256, 64),
+            nn.Linear(100, 100),
             nn.Tanh(),
-            nn.Linear(64, 1),
+            nn.Linear(100, 1),
         )
 
     def forward(self, X):
@@ -48,6 +52,8 @@ class FFN(nn.Module):
 
 
 if __name__ == "__main__":
+
+    start_time = time.time()  # Start timing
     inputs = np.array(
         [
             [2, 3, -1],
@@ -79,11 +85,12 @@ if __name__ == "__main__":
     print(out)
 
     model_layers = [
-        [3, 32],
-        [32, 64],
-        [64, 256],
-        [256, 64],
-        [64, 1],
+        [3, 125],
+        [125, 3500],
+        [3500, 3500],
+        [3500, 3500],
+        [3500, 125],
+        [125, 1],
     ]
 
     # Input size (list of lists)
@@ -92,3 +99,6 @@ if __name__ == "__main__":
     # Calculate total FLOPS
     total_flops = total_flops(input_size, model_layers)
     print(f"Total FLOPS: {total_flops}")
+
+    end_time = time.time()  # End timing
+    print(f"Execution time: {end_time - start_time:.2f} seconds")
