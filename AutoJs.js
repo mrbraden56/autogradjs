@@ -84,7 +84,7 @@ class Tensor {
       if (y.value > 0) {
         x.grad += y.grad;
       } else {
-        x.grad += 0; // This is redundant but makes it clear
+        x.grad += 0;
       }
     };
     y._backward = _backward;
@@ -199,7 +199,6 @@ class FFN {
     this.layers_1 = [
       //2x3
       new Layer(3, 30),
-      new Layer(30, 30),
       new Layer(30, 1),
     ];
 

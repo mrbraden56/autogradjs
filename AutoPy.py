@@ -174,7 +174,7 @@ def capture_gc_time():
 if __name__ == "__main__":
     initial_gc_time = capture_gc_time()
 
-    start_time = time.time()  # Start timing
+    start_time = time.time()
     inputs = [
         [2, 3, -1],
         [-1, 0, -2],
@@ -199,13 +199,11 @@ if __name__ == "__main__":
             print(f"Epoch: {epoch}, Loss: {loss.value}")
 
     print(f"Epoch: {epoch}, Loss: {loss.value}")
-    end_time = time.time()  # End timing
+    end_time = time.time()
     print(preds)
     print(f"Execution time: {end_time - start_time:.2f} seconds")
-    # Get final GC stats
     final_gc_time = capture_gc_time()
 
-    # Calculate total GC time elapsed
     gc_time_elapsed = final_gc_time - initial_gc_time
 
     print(f"Total time elapsed by garbage collector: {gc_time_elapsed} seconds")
