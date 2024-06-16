@@ -4439,7 +4439,7 @@ var wasmImports = {
 };
 var wasmExports = createWasm();
 var ___wasm_call_ctors = createExportWrapper('__wasm_call_ctors', 0);
-var _fit = Module['_fit'] = createExportWrapper('fit', 2);
+var _fit = Module['_fit'] = createExportWrapper('fit', 6);
 var _fflush = createExportWrapper('fflush', 1);
 var _malloc = Module['_malloc'] = createExportWrapper('malloc', 1);
 var _free = Module['_free'] = createExportWrapper('free', 1);
