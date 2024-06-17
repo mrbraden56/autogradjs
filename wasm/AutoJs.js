@@ -14,7 +14,7 @@ class FFN {
     return heapPointer;
   }
 
-  pass_data(x, y) {
+  pass_data(x, y, epochs, step) {
     this.factory().then((Module) => {
       const x_pointer = this.encode_array(x, Float32Array, Module);
       const y_pointer = this.encode_array(y, Float32Array, Module);
@@ -22,8 +22,26 @@ class FFN {
       Module.ccall(
         "fit", // name of the C++ function
         null, // return type
-        ["number", "number", "number", "number", "number", "number"], // argument types
-        [x_pointer, x.length, x[0].length, y_pointer, y.length, y[0].length], // arguments
+        [
+          "number",
+          "number",
+          "number",
+          "number",
+          "number",
+          "number",
+          "number",
+          "number",
+        ], // argument types
+        [
+          x_pointer,
+          x.length,
+          x[0].length,
+          y_pointer,
+          y.length,
+          y[0].length,
+          epochs,
+          step,
+        ], // arguments
       );
       Module._free(x_pointer);
       Module._free(y_pointer);
@@ -31,9 +49,7 @@ class FFN {
   }
 
   fit({ x, y_true, epochs = 10, step = 0.01 }) {
-    for (var epoch = 0; epoch < epochs; epoch++) {
-      this.pass_data(x, y_true);
-    }
+    this.pass_data(x, y_true, epochs, step);
   }
 }
 
@@ -48,6 +64,6 @@ if (require.main === module) {
     [30, 1],
   ];
   var nn = new FFN(layers);
-  const params = { x, y_true, epochs: 1, step: 0.01 };
+  const params = { x, y_true, epochs: 10, step: 0.01 };
   nn.fit(params);
 }
