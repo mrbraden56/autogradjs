@@ -18,11 +18,19 @@ class FFN {
     this.factory().then((Module) => {
       const x_pointer = this.encode_array(x, Float32Array, Module);
       const y_pointer = this.encode_array(y, Float32Array, Module);
+      const layers_pointer = this.encode_array(
+        this.layers,
+        Float32Array,
+        Module,
+      );
 
       Module.ccall(
         "fit", // name of the C++ function
         null, // return type
         [
+          "number",
+          "number",
+          "number",
           "number",
           "number",
           "number",
@@ -39,6 +47,9 @@ class FFN {
           y_pointer,
           y.length,
           y[0].length,
+          layers_pointer,
+          this.layers.length,
+          this.layers[0].length,
           epochs,
           step,
         ], // arguments
@@ -61,6 +72,7 @@ if (require.main === module) {
   var y_true = [[0], [-1], [1]];
   var layers = [
     [3, 30],
+    [30, 30],
     [30, 1],
   ];
   var nn = new FFN(layers);

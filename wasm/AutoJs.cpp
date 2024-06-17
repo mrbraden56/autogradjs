@@ -69,6 +69,25 @@ protected:
   std::function<void()> _backwards;
 };
 
+class Matrix {
+public:
+  static Matrix zeroes() {}
+  static Matrix matmul() {}
+  static Matrix tanh() {}
+};
+
+// class Layer {
+//   this->weights = Matrix(nin, nout, randomUniform);
+//   this->bias = Matrix(1, nout, randomUniform);
+//
+// public:
+//   Matrix forward() {
+//     Matrix.tanh(Matrix.add(Matrix.matmul(x, this->weights), this->bias))
+//   }
+// };
+//
+// class FFN {};
+
 void print_array(float *pointer, int rows, int cols) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; j++) {
@@ -81,10 +100,13 @@ extern "C" {
 
 EMSCRIPTEN_KEEPALIVE
 void fit(float *x_pointer, int x_rows, int x_cols, float *y_pointer, int y_rows,
-         int y_cols, int epochs, float step) {
+         int y_cols, float *layers_pointer, int layers_rows, int layers_cols,
+         int epochs, float step) {
   print_array(x_pointer, x_rows, x_cols);
   std::cout << std::endl;
   print_array(y_pointer, y_rows, y_cols);
+  std::cout << std::endl;
+  print_array(layers_pointer, layers_rows, layers_cols);
   std::cout << std::endl;
   std::cout << epochs << " " << step << "\n";
   std::cout << std::endl;
