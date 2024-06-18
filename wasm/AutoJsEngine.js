@@ -1247,6 +1247,43 @@ function dbg(...args) {
       return 0;
     };
 
+  var initRandomFill = () => {
+      if (typeof crypto == 'object' && typeof crypto['getRandomValues'] == 'function') {
+        // for modern web browsers
+        return (view) => crypto.getRandomValues(view);
+      } else
+      if (ENVIRONMENT_IS_NODE) {
+        // for nodejs with or without crypto support included
+        try {
+          var crypto_module = require('crypto');
+          var randomFillSync = crypto_module['randomFillSync'];
+          if (randomFillSync) {
+            // nodejs with LTS crypto support
+            return (view) => crypto_module['randomFillSync'](view);
+          }
+          // very old nodejs with the original crypto API
+          var randomBytes = crypto_module['randomBytes'];
+          return (view) => (
+            view.set(randomBytes(view.byteLength)),
+            // Return the original view to match modern native implementations.
+            view
+          );
+        } catch (e) {
+          // nodejs doesn't have crypto support
+        }
+      }
+      // we couldn't find a proper implementation, as Math.random() is not suitable for /dev/random, see emscripten-core/emscripten/pull/7096
+      abort('no cryptographic support found for randomDevice. consider polyfilling it if you want to use something insecure like Math.random(), e.g. put this in a --pre-js: var crypto = { getRandomValues: (array) => { for (var i = 0; i < array.length; i++) array[i] = (Math.random()*256)|0 } };');
+    };
+  var randomFill = (view) => {
+      // Lazily init on the first invocation.
+      return (randomFill = initRandomFill())(view);
+    };
+  var _getentropy = (buffer, size) => {
+      randomFill(HEAPU8.subarray(buffer, buffer + size));
+      return 0;
+    };
+
   var getCFunc = (ident) => {
       var func = Module['_' + ident]; // closure exported function
       assert(func, 'Cannot call unknown function ' + ident + ', make sure it is exported');
@@ -1419,7 +1456,9 @@ var wasmImports = {
   /** @export */
   fd_seek: _fd_seek,
   /** @export */
-  fd_write: _fd_write
+  fd_write: _fd_write,
+  /** @export */
+  getentropy: _getentropy
 };
 var wasmExports = createWasm();
 var ___wasm_call_ctors = createExportWrapper('__wasm_call_ctors', 0);
@@ -1467,8 +1506,6 @@ var missingLibrarySymbols = [
   'inetNtop6',
   'readSockaddr',
   'writeSockaddr',
-  'initRandomFill',
-  'randomFill',
   'emscriptenLog',
   'readEmAsmArgs',
   'jstoi_q',
@@ -1654,6 +1691,8 @@ var unexportedSymbols = [
   'DNS',
   'Protocols',
   'Sockets',
+  'initRandomFill',
+  'randomFill',
   'timers',
   'warnOnce',
   'readEmAsmArgsArray',

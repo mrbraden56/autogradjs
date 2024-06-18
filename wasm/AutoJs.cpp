@@ -131,17 +131,34 @@ public:
     }
     return arr;
   }
-  static std::vector<Tensor> tanh() {}
+
+  static std::vector<Tensor> add(std::vector<Tensor> x, std::vector<Tensor> y) {
+
+    std::vector<Tensor> arr(x.size());
+    for (int i = 0; i < x.size(); i++) {
+      arr[i] = Tensor::add(x[i], y[i]);
+    }
+    return arr;
+  }
+  static std::vector<Tensor> tanh(std::vector<Tensor> x) {
+    std::vector<Tensor> arr(x.size());
+    for (int i = 0; i < x.size(); i++) {
+      arr[i] = Tensor::tanh(x[i]);
+    }
+    return arr;
+  }
 };
 
 class Layer {
 
 public:
+  Layer(int inputs, int outputs) : nin(inputs), nout(outputs) {}
   Layer() : nin(0), nout(0) {}
 
-  // Matrix forward() {
-  //   Matrix.tanh(Matrix.add(Matrix.matmul(x, this->weights), this->bias))
-  // }
+  std::vector<Tensor> forward(std::vector<Tensor> x, int xr, int xc) {
+    Matrix::tanh(Matrix::add(
+        Matrix::matmul(x, xr, xc, this->weights, nin, nout), this->bias));
+  }
 
   int nin;
   int nout;
@@ -149,7 +166,16 @@ public:
   std::vector<Tensor> bias = Matrix::initialize(1, nout);
 };
 
-// class FFN {};
+class FFN {
+public:
+  std::vector<Layer> layers = {Layer(3, 30), Layer(30, 3)};
+
+  std::vector<Tensor> forward(std::vector<Tensor> input, int xr, int xc) {
+    for (int i = 0; i < this->layers.size(); i++) {
+      input = this->layers[i].forward(input, xr, xc);
+    }
+  }
+};
 
 void print_array(float *pointer, int rows, int cols) {
   for (int i = 0; i < rows; ++i) {
@@ -167,5 +193,8 @@ void fit(float *x_pointer, int x_rows, int x_cols, float *y_pointer, int y_rows,
          int epochs, float step) {
   std::vector<Tensor> x = Tensor::array(x_pointer, x_rows, x_cols);
   std::vector<Tensor> y = Tensor::array(y_pointer, y_rows, y_cols);
+
+  FFN ffn;
+  ffn.forward(x, x_rows, x_cols);
 }
 }
