@@ -185,6 +185,13 @@ void print_array(float *pointer, int rows, int cols) {
   }
 }
 
+void test_matmul(std::vector<Tensor> x, int xr, int xc, std::vector<Tensor> y,
+                 int yr, int yc) {
+  std::cout << "Testing matmul\n";
+  Matrix::matmul(x, xr, xc, y, yr, yc);
+  std::cout << "Matmul Passed\n";
+}
+
 extern "C" {
 
 EMSCRIPTEN_KEEPALIVE
@@ -193,6 +200,7 @@ void fit(float *x_pointer, int x_rows, int x_cols, float *y_pointer, int y_rows,
          int epochs, float step) {
   std::vector<Tensor> x = Tensor::array(x_pointer, x_rows, x_cols);
   std::vector<Tensor> y = Tensor::array(y_pointer, y_rows, y_cols);
+  test_matmul(x, x_rows, x_cols, y, y_rows, y_cols);
 
   FFN ffn;
   ffn.forward(x, x_rows, x_cols);
