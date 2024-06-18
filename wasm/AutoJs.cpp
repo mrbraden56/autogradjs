@@ -200,6 +200,7 @@ void fit(float *x_pointer, int x_rows, int x_cols, float *y_pointer, int y_rows,
          int epochs, float step) {
   std::vector<Tensor> x = Tensor::array(x_pointer, x_rows, x_cols);
   std::vector<Tensor> y = Tensor::array(y_pointer, y_rows, y_cols);
+  // NOTE: Tests
   test_matmul(x, x_rows, x_cols, y, y_rows, y_cols);
 
   FFN ffn;
