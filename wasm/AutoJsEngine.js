@@ -4107,6 +4107,11 @@ function dbg(...args) {
   }
   }
 
+  var _getentropy = (buffer, size) => {
+      randomFill(HEAPU8.subarray(buffer, buffer + size));
+      return 0;
+    };
+
   var isLeapYear = (year) => year%4 === 0 && (year%100 !== 0 || year%400 === 0);
   
   var arraySum = (array, index) => {
@@ -4521,6 +4526,8 @@ var wasmImports = {
   fd_seek: _fd_seek,
   /** @export */
   fd_write: _fd_write,
+  /** @export */
+  getentropy: _getentropy,
   /** @export */
   strftime_l: _strftime_l
 };
