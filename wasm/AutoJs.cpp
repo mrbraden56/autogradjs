@@ -85,6 +85,17 @@ class Matrix {
 
 public:
   Matrix() {}
+  Matrix(int rows, int cols)
+      : rows(rows), cols(cols), data(rows * cols),
+        shape(std::make_pair(rows, cols)) {}
+  int rows, cols;
+  std::pair<int, int> shape = std::make_pair(rows, cols);
+  std::vector<Tensor> data;
+
+  void print_shape() {
+    std::cout << "(" << this->shape.first << ", " << this->shape.second
+              << ")\n";
+  }
 
   static double uniform_random(double a, double b) {
     std::random_device rd;  // Obtain a random number from hardware
@@ -95,101 +106,109 @@ public:
     return dis(gen); // Generate a random number
   }
 
-  static std::vector<Tensor> zeroes(int rows, int cols) {
-    std::vector<Tensor> arr(rows * cols);
+  static Matrix zeroes(int rows, int cols) {
+    Matrix mat(rows, cols);
+    // std::vector<Tensor> arr(rows * cols);
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; j++) {
-        arr[i * cols + j] = Tensor(0, 0, std::make_pair(nullptr, nullptr));
+        mat.data[i * cols + j] = Tensor(0, 0, std::make_pair(nullptr, nullptr));
       }
     }
-    return arr;
+    return mat;
   }
-  static std::vector<Tensor> initialize(int rows, int cols) {
-    std::vector<Tensor> arr(rows * cols);
+  static Matrix initialize(int rows, int cols) {
+    Matrix mat(rows, cols);
+    // std::vector<Tensor> arr(rows * cols);
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; j++) {
         double rand_num = uniform_random(-1.0, 1.0);
-        arr[i * cols + j] =
+        mat.data[i * cols + j] =
             Tensor(rand_num, 0, std::make_pair(nullptr, nullptr));
       }
     }
-    return arr;
+    return mat;
   }
   //(AB) * (BC) = AC
-  static std::vector<Tensor> matmul(std::vector<Tensor> x, int xr, int xc,
-                                    std::vector<Tensor> y, int yr, int yc) {
+  static Matrix matmul(std::vector<Tensor> x, int xr, int xc,
+                       std::vector<Tensor> y, int yr, int yc) {
 
-    std::vector<Tensor> arr(xr * yc);
+    Matrix mat(xr, yc);
+    // std::vector<Tensor> arr(xr * yc);
     for (int i = 0; i < xr; ++i) {
       for (int j = 0; j < yc; ++j) {
         Tensor sum = Tensor(0, 0, std::make_pair(nullptr, nullptr));
         for (int k = 0; k < xc; ++k) {
           sum = Tensor::add(sum, Tensor::mul(x[i * xc + k], y[k * yc + j]));
         }
-        arr[i * yc + j] = sum;
+        mat.data[i * yc + j] = sum;
       }
     }
-    return arr;
+    return mat;
   }
 
-  static std::vector<Tensor> add(std::vector<Tensor> x, std::vector<Tensor> y) {
+  static Matrix add(std::vector<Tensor> x, std::vector<Tensor> y) {
 
-    std::vector<Tensor> arr(x.size());
+    // std::vector<Tensor> arr(x.size());
+    Matrix mat(x.size(), 1);
     for (int i = 0; i < x.size(); i++) {
-      arr[i] = Tensor::add(x[i], y[i]);
+      mat.data[i] = Tensor::add(x[i], y[i]);
     }
-    return arr;
+    return mat;
   }
-  static std::vector<Tensor> tanh(std::vector<Tensor> x) {
-    std::vector<Tensor> arr(x.size());
+  static Matrix tanh(std::vector<Tensor> x) {
+    // std::vector<Tensor> arr(x.size());
+    Matrix mat(x.size(), 1);
     for (int i = 0; i < x.size(); i++) {
-      arr[i] = Tensor::tanh(x[i]);
+      mat.data[i] = Tensor::tanh(x[i]);
     }
-    return arr;
+    return mat;
   }
 };
 
-class Layer {
+// class Layer {
+//
+// public:
+//   Layer(int inputs, int outputs) : nin(inputs), nout(outputs) {}
+//   Layer() : nin(0), nout(0) {}
+//
+//   Matrix forward(std::vector<Tensor> x, int xr, int xc) {
+//     return Matrix::tanh(Matrix::add(
+//         Matrix::matmul(x, xr, xc, this->weights, nin, nout), this->bias));
+//   }
+//
+//   void shape() {}
+//
+//   int nin;
+//   int nout;
+//   std::vector<Tensor> weights = Matrix::initialize(nin, nout);
+//   std::vector<Tensor> bias = Matrix::initialize(1, nout);
+// };
+//
+// class FFN {
+// public:
+//   std::vector<Layer> layers = {Layer(4, 30), Layer(30, 4)};
+//
+//   std::vector<Tensor> forward(std::vector<Tensor> input, int xr, int xc) {
+//     for (int i = 0; i < this->layers.size(); i++) {
+//       input = this->layers[i].forward(input, xr, xc);
+//     }
+//   }
+// };
+//
+// void print_array(float *pointer, int rows, int cols) {
+//   for (int i = 0; i < rows; ++i) {
+//     for (int j = 0; j < cols; j++) {
+//       std::cout << pointer[i * cols + j] << " ";
+//     }
+//   }
+// }
 
-public:
-  Layer(int inputs, int outputs) : nin(inputs), nout(outputs) {}
-  Layer() : nin(0), nout(0) {}
-
-  std::vector<Tensor> forward(std::vector<Tensor> x, int xr, int xc) {
-    Matrix::tanh(Matrix::add(
-        Matrix::matmul(x, xr, xc, this->weights, nin, nout), this->bias));
-  }
-
-  int nin;
-  int nout;
-  std::vector<Tensor> weights = Matrix::initialize(nin, nout);
-  std::vector<Tensor> bias = Matrix::initialize(1, nout);
-};
-
-class FFN {
-public:
-  std::vector<Layer> layers = {Layer(3, 30), Layer(30, 3)};
-
-  std::vector<Tensor> forward(std::vector<Tensor> input, int xr, int xc) {
-    for (int i = 0; i < this->layers.size(); i++) {
-      input = this->layers[i].forward(input, xr, xc);
-    }
-  }
-};
-
-void print_array(float *pointer, int rows, int cols) {
-  for (int i = 0; i < rows; ++i) {
-    for (int j = 0; j < cols; j++) {
-      std::cout << pointer[i * cols + j] << " ";
-    }
-  }
-}
-
-void test_matmul(std::vector<Tensor> x, int xr, int xc, std::vector<Tensor> y,
-                 int yr, int yc) {
-  std::cout << "Testing matmul\n";
-  Matrix::matmul(x, xr, xc, y, yr, yc);
-  std::cout << "Matmul Passed\n";
+void test(std::vector<Tensor> x, int xr, int xc, std::vector<Tensor> y, int yr,
+          int yc) {
+  Matrix matmul = Matrix::matmul(x, xr, xc, y, yr, yc);
+  Matrix bias = Matrix::initialize(1, 30);
+  Matrix added = Matrix::add(matmul, bias);
+  Matrix::tanh(added);
 }
 
 extern "C" {
@@ -201,9 +220,12 @@ void fit(float *x_pointer, int x_rows, int x_cols, float *y_pointer, int y_rows,
   std::vector<Tensor> x = Tensor::array(x_pointer, x_rows, x_cols);
   std::vector<Tensor> y = Tensor::array(y_pointer, y_rows, y_cols);
   // NOTE: Tests
-  test_matmul(x, x_rows, x_cols, y, y_rows, y_cols);
+  // test(x, x_rows, x_cols, y, y_rows, y_cols);
+  int rows = 3;
+  int cols = 4;
+  Matrix matrix = Matrix::zeroes(rows, cols);
 
-  FFN ffn;
-  ffn.forward(x, x_rows, x_cols);
+  // FFN ffn;
+  // ffn.forward(x, x_rows, x_cols);
 }
 }

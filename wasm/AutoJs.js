@@ -69,10 +69,9 @@ if (require.main === module) {
     [1, 2, 3, 4],
     [5, 6, 7, 8],
   ];
-  var y_true = [[0], [-1], [1]];
+  var y_true = [[0], [-1], [1], [0]];
   var layers = [
-    [3, 30],
-    [30, 30],
+    [4, 30],
     [30, 1],
   ];
   var nn = new FFN(layers);
