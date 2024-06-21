@@ -196,7 +196,16 @@ public:
 
 class FFN {
 public:
-  std::vector<Layer> layers = {Layer(4, 30), Layer(30, 4)};
+  std::vector<Layer> layers; // = {Layer(4, 30), Layer(30, 4)};
+
+  void initializeLayers(float *layers_pointer, int layers_rows,
+                        int layers_cols) {
+    for (int i = 0; i < layers_rows; ++i) {
+      int nin = layers_pointer[i * layers_cols];
+      int nout = layers_pointer[i * layers_cols + 1];
+      layers.push_back(Layer(nin, nout));
+    }
+  }
 
   Matrix forward(Matrix input) {
     for (int i = 0; i < this->layers.size(); i++) {
@@ -214,6 +223,7 @@ void print_array(float *pointer, int rows, int cols) {
       std::cout << pointer[i * cols + j] << " ";
     }
   }
+  std::cout << "\n";
 }
 
 void test(Matrix x, Matrix y) {
@@ -237,6 +247,7 @@ void fit(float *x_pointer, int x_rows, int x_cols, float *y_pointer, int y_rows,
   // test(x, y);
 
   FFN ffn;
+  ffn.initializeLayers(layers_pointer, layers_rows, layers_cols);
   ffn.forward(x);
 }
 }

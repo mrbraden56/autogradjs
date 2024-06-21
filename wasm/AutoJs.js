@@ -72,7 +72,7 @@ if (require.main === module) {
   var y_true = [[0], [-1], [1], [0]];
   var layers = [
     [4, 30],
-    [30, 1],
+    [30, 4],
   ];
   var nn = new FFN(layers);
   const params = { x, y_true, epochs: 10, step: 0.01 };
