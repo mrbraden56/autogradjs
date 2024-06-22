@@ -1,9 +1,11 @@
 
+#include <algorithm>
 #include <cmath>
 #include <emscripten.h>
 #include <functional> // for std::function
 #include <iostream>
 #include <random>
+#include <set>
 #include <utility> // for std::pair
 #include <vector>
 
@@ -14,6 +16,8 @@ public:
   Tensor()
       : value(0.0f), gradient(0.0f), parents(std::make_pair(nullptr, nullptr)) {
   }
+  Tensor(float val)
+      : value(val), gradient(0.0f), parents(std::make_pair(nullptr, nullptr)) {}
   Tensor(float val, float grad, std::pair<Tensor *, Tensor *> par)
       : value(val), gradient(grad), parents(par) {}
 
@@ -73,6 +77,33 @@ public:
       }
     }
     return arr;
+  }
+
+  bool operator<(const Tensor &other) const { return this < &other; }
+
+  void backward() {
+    std::vector<Tensor> topo;
+    std::set<Tensor> visited;
+    std::function<void(Tensor)> build_topo = [&](Tensor v) {
+      if (!visited.count(v)) {
+        visited.insert(v);
+        if (v.parents.first != nullptr) {
+          build_topo(v);
+        }
+        if (v.parents.second != nullptr) {
+          build_topo(v);
+        }
+        topo.push_back(v);
+      }
+      build_topo(*this);
+      this->gradient = 1;
+      std::reverse(topo.begin(), topo.end());
+      for (const Tensor &v : topo) {
+        if (v._backwards) {
+          v._backwards();
+        }
+      }
+    };
   }
 
   float value;
@@ -160,9 +191,12 @@ public:
 
     // std::vector<Tensor> arr(x.size());
     Matrix mat(x.shape.first, x.shape.second);
-    for (int i = 0; i < x.data.size(); i++) {
-      mat.data[i] = Tensor::add(x[i], y[i]);
+    for (int i = 0; i < x.shape.first; i++) {
+      for (int j = 0; j < x.shape.second; j++) {
+        mat.data[i] = Tensor::add(x[i * x.shape.second + j], y[j]);
+      }
     }
+
     return mat;
   }
   static Matrix tanh(Matrix x) {
@@ -172,6 +206,20 @@ public:
       mat.data[i] = Tensor::tanh(x[i]);
     }
     return mat;
+  }
+
+  static Tensor mse(Matrix predicted, Matrix actual) {
+    Tensor mse = Tensor(0);
+    int total_elements = predicted.shape.first * predicted.shape.second;
+    Tensor pow = Tensor(2);
+
+    for (int i = 0; i < total_elements; ++i) {
+      Tensor diff = Tensor::sub(predicted.data[i], actual.data[i]);
+      Tensor squared_diff = Tensor::pow(diff, pow);
+      mse = Tensor::add(mse, squared_diff);
+    }
+
+    return mse;
   }
 };
 
@@ -191,7 +239,7 @@ public:
   int nin;
   int nout;
   Matrix weights = Matrix::initialize(nin, nout);
-  Matrix bias = Matrix::initialize(2, nout);
+  Matrix bias = Matrix::initialize(1, nout);
 };
 
 class FFN {
@@ -210,9 +258,8 @@ public:
   Matrix forward(Matrix input) {
     for (int i = 0; i < this->layers.size(); i++) {
       input = this->layers[i].forward(input);
+      std::cout << "Forward done!\n";
     }
-    std::cout << "Forward done, shape: ";
-    input.print_shape();
     return input;
   }
 };
@@ -244,10 +291,18 @@ void fit(float *x_pointer, int x_rows, int x_cols, float *y_pointer, int y_rows,
   Matrix y =
       Matrix::array(Tensor::array(y_pointer, y_rows, y_cols), y_rows, y_cols);
   // NOTE: Tests
-  // test(x, y);
+  test(x, y);
 
   FFN ffn;
   ffn.initializeLayers(layers_pointer, layers_rows, layers_cols);
-  ffn.forward(x);
+  Matrix out = ffn.forward(x);
+  out.print_shape();
+  Tensor loss = Matrix::mse(out, y);
+  std::cout << "Loss: " << loss.value << "\n";
+  std::cout << "Grad: " << loss.gradient << "\n";
+  std::cout << "Backwards!\n";
+  loss.backward();
+  std::cout << "Loss: " << loss.value << "\n";
+  std::cout << "Grad: " << loss.gradient << "\n";
 }
 }

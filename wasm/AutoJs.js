@@ -66,13 +66,14 @@ class FFN {
 
 if (require.main === module) {
   var x = [
-    [1, 2, 3, 4],
-    [5, 6, 7, 8],
+    [2, 3, -1],
+    [-1, 0, -2],
+    [3, 2, 3],
   ];
-  var y_true = [[0], [-1], [1], [0]];
+  var y_true = [[0], [-1], [1]];
   var layers = [
-    [4, 30],
-    [30, 4],
+    [3, 30],
+    [30, 1],
   ];
   var nn = new FFN(layers);
   const params = { x, y_true, epochs: 10, step: 0.01 };
